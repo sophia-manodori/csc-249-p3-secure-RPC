@@ -28,7 +28,7 @@ SERVER_PORT = args.server_port  # Port to listen on (non-privileged ports are > 
 
 # Format and return a certificate containing the server's socket information and public key
 def format_certificate(public_key):
-    unsigned_certificate = '' # replace this line
+    unsigned_certificate = SERVER_IP+'|'+ str(SERVER_PORT) +'|' + str(public_key[0]) +'|' + str(public_key[1]) # replace this line
     print(f"Prepared the formatted unsigned certificate '{unsigned_certificate}'")
     return unsigned_certificate
 
@@ -56,6 +56,22 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 print(f"Received signed certificate '{signed_certificate}' from the certificate authority")
 
 def TLS_handshake_server(connection):
+    #with connection:
+        print(f"Connected established with client for TLS handshake")
+        request = connection.recv(1024).decode('utf-8')
+        if(request=="Request TLS"):
+            print(f"Sending signed certificate to client '{signed_certificate}'")
+            connection.sendall(bytes(signed_certificate, 'utf-8'))
+            resp = connection.recv(1024).decode('utf-8')
+            key = cryptgraphy_simulator.private_key_decrypt(private_key,resp)
+            print("recieved symmetric key "+ key)
+    ## Instructions ##
+    # Fill this function in with the TLS handshake:
+    #  * Send a signed certificate to the client
+    #    * A signed certificate variable should be available as 'signed_certificate'
+    #  * Receive an encrypted symmetric key from the client
+    #  * Return the symmetric key for use in further communications with the client
+        return key
     ## Instructions ##
     # Fill this function in with the TLS handshake:
     #  * Receive a request for a TLS handshake from the client
@@ -63,7 +79,6 @@ def TLS_handshake_server(connection):
     #    * A signed certificate variable should be available as 'signed_certificate'
     #  * Receive an encrypted symmetric key from the client
     #  * Decrypt and return the symmetric key for use in further communications with the client
-    return 0
 
 def process_message(message):
     # Change this function to change the service your server provides
@@ -79,7 +94,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         print(f"Connected established with {addr}")
         symmetric_key = TLS_handshake_server(conn)
         print(f"TLS handshake complete: established symmetric key '{symmetric_key}', acknowledging to client")
-        conn.sendall(bytes(cryptgraphy_simulator.symmetric_encrypt(symmetric_key, f"Symmetric key '{symmetric_key}' received"), 'utf-8'))
+        conn.sendall(bytes(cryptgraphy_simulator.symmetric_encrypt(symmetric_key, "Symmetric key received"), 'utf-8'))
         while True:
             data = conn.recv(1024)
             if not data:

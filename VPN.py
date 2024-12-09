@@ -45,6 +45,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
                     break
                 print(f"Received server response: '{data!r}' [{len(data)} bytes], forwarding to client")
                 client_conn.sendall(data)
+                import time; time.sleep(1)
+                print("line 49")
                 data = client_conn.recv(1024)
                 if not data:
                     break
